@@ -1,0 +1,57 @@
+name: Build and Deploy - Java
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/main/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  get-info-values:
+    uses: ./.github/workflows/get-info-values.yaml
+    secrets:
+      WORKLOAD_IDENTITY_PRVDR: ${{ secrets.WORKLOAD_IDENTITY_PRVDR }}
+      TODO_CICD_SA: ${{ secrets.TODO_CICD_SA }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+
+  deploy:
+    needs: [get-info-values]
+    uses: EzalB/github-actions-commons/.github/workflows/ci-cd.yaml@main
+    secrets:
+      WORKLOAD_IDENTITY_PRVDR: ${{ secrets.WORKLOAD_IDENTITY_PRVDR }}
+      TODO_CICD_SA: ${{ secrets.TODO_CICD_SA }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+    with:
+      createGithubRelease: true
+
+      appName: ${{ needs.get-info-values.outputs.appName }}
+      appVersion: ${{ needs.get-info-values.outputs.appVersion }}
+      currentBranch: ${{ needs.get-info-values.outputs.currentBranch }}
+
+      java-version: '17'
+      java-distro: 'temurin'
+      project-dir: './'
+      unittest-upload-name: 'unit-test-results'
+
+      dockerize: true
+      docker-image-name: todo-sb-app
+      docker-registry: todo-docker-repo
+      docker-context: '.'
+      dockerfile: 'Dockerfileactions'
+      docker-push: true
+
+      imageRepositoryWithVersion: ${{ needs.get-info-values.outputs.imageRepositoryWithVersion }}
+
+      outputHelmChartDirectory: todo-helm-chart
+      outputHelmChartName: helm_output
+      REGISTRY_TYPE: 'docker.pkg.dev'
+      HELM_REPO_NAME: 'todo-helm-repo'

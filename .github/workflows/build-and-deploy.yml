@@ -1,0 +1,73 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-role
+          aws-region: us-east-1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build Spring Boot Service
+        run: |
+          cd services/todo-service
+          ./gradlew clean build -x test
+
+      - name: Build Go Service
+        run: |
+          cd services/notifier-service
+          go build -o notifier .
+
+      - name: Authenticate with ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Docker Images
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG=${{ github.sha }}
+          
+          docker build -t $ECR_REGISTRY/todo-service:$IMAGE_TAG ./services/todo-service
+          docker push $ECR_REGISTRY/todo-service:$IMAGE_TAG
+          
+          docker build -t $ECR_REGISTRY/notifier-service:$IMAGE_TAG ./services/notifier-service
+          docker push $ECR_REGISTRY/notifier-service:$IMAGE_TAG
+
+      - name: Package Helm Charts
+        run: |
+          helm package deploy/helm/todo-service -d deploy/gitops/base/todo-service
+          helm package deploy/helm/notifier-service -d deploy/gitops/base/notifier-service
+
+      - name: Update GitOps Manifests
+        run: |
+          sed -i "s|image:.*|image: $ECR_REGISTRY/todo-service:${GITHUB_SHA}|" deploy/gitops/base/todo-service/values.yaml
+          sed -i "s|image:.*|image: $ECR_REGISTRY/notifier-service:${GITHUB_SHA}|" deploy/gitops/base/notifier-service/values.yaml
+
+      - name: Commit & Push GitOps Changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add deploy/gitops
+          git commit -m "Update images to $GITHUB_SHA"
+          git push

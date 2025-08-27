@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "obm.appName" . }}
+  labels:
+    app: todo
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: {{ .Values.updateStrategy.type }}
+    rollingUpdate:
+      maxSurge: {{ .Values.updateStrategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.updateStrategy.rollingUpdate.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: {{ template "obm.appName" . }}
+      branch: {{ template "obm.branchName" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "obm.appName" . }}
+        branch: {{ template "obm.branchName" . }}
+        {{- range $key, $value := .Values.customLabels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+    spec:
+      {{- if .Values.workloadIdentity.enabled  }}
+      serviceAccountName: {{ include "obm.appName" . }}-serviceaccount
+      {{- end }}
+      containers:
+          - name: {{ template "obm.appName" . }}
+            image: {{ template "obm.fullImageName" . }}
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            env:
+              - name: SPRING_APPLICATION_NAME
+                value: {{ template "obm.appName" . }}
+              - name: BRANCH_NAME
+                value: {{ template "obm.branchName" . }}
+#              - name: VERSION
+#                value: {{ template "obm.version" . }}
+              {{ - if .Values.javaOptionsEnv }}
+              - name: JAVA_OPTS
+                value: {{ .Values.javaOptionsEnv }}
+              {{- end }}
+              {{- if .Values.heapSizeMB}}
+              - name: HEAP_SIZE_MB
+                value: {{ .Values.heapSizeMB }}
+              {{- end }}
+              {{if .Values.configMapSecretAsEnv}}
+                {{- range $index, $secretVal := .Values.configMapSecretAsEnv}}
+              - name: {{ $secretVal.envName }}
+                valueFrom:
+                  secretKeyRef:
+                    key: {{ $secretVal.keyToMap}}
+                    name: {{ $secretVal.secretFileName}}
+                {{- end}}
+              {{- end}}
+
+              {{if .Values.configMapValueAsEnv}}
+                {{ - range $index, $configmapVal := .Values.configMapValueAsEnv }}
+              - name: {{ $configmapVal.envName }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ $configmapVal.configmapName }}
+                    key: {{ $configmapVal.keyToMap }}
+                {{- end }}
+              {{- end }}
+            ports:
+              - name: http
+                containerPort: {{ .Values.service.port }}
+                protocol: TCP
+            startupProbe:
+{{ toYaml .Values.startupProbe | indent 14 }}
+            readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 14 }}
+            livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 14 }}
+            resources:
+{{ toYaml .Values.resources | indent 14 }}
