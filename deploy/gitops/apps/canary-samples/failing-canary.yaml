@@ -1,0 +1,17 @@
+# deploy/gitops/apps/canary-samples/failing-canary.yaml
+apiVersion: ops.ezalb.com/v1alpha1
+kind: CanaryRelease
+metadata:
+  name: todo-failing
+  namespace: default
+spec:
+  targetRef:
+    kind: Deployment
+    name: todo-service
+    namespace: default
+  image: your-ecr-account.dkr.ecr.us-east-1.amazonaws.com/todo-service:canary-faulty
+  canaryPercent: 10
+  durationMinutes: 5
+  successCriteria:
+    errorRateThreshold: 0.005  # very strict — small failures will exceed this
+    latencyP95Ms: 200          # strict latency
