@@ -9,6 +9,20 @@ terraform {
   }
 }
 
+locals {
+  merged_tags = merge(
+    var.default_tags,
+    {
+      managed-by  = "terraform"
+      environment = var.environment
+    }
+  )
+}
+
 provider "aws" {
   region  = var.aws_region
+
+  default_tags {
+    tags = local.merged_tags
+  }
 }

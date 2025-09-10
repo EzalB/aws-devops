@@ -4,12 +4,6 @@ variable "bucket_prefix" {
   description = "Prefix of the S3 bucket"
 }
 
-#variable "bucket" {
-#  type        = string
-#  default     = ""
-#  description = "Name of the S3 bucket"
-#}
-
 variable "force_destroy" {
   description = "Whether to force destroy the bucket even if it contains objects"
   type        = bool
