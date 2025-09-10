@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "notifier-service.fullname" . }}
+  labels:
+    app: {{ include "notifier-service.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "notifier-service.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "notifier-service.name" . }}
+    spec:
+      serviceAccountName: {{ include "notifier-service.serviceAccountName" . }}
+      containers:
+        - name: notifier-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: AWS_REGION
+              value: {{ .Values.env.AWS_REGION | quote }}
+            - name: SQS_QUEUE_URL
+              value: {{ .Values.env.SQS_QUEUE_URL | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.env.LOG_LEVEL | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

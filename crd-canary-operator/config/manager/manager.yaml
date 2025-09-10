@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary-operator
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: canary-operator
+  template:
+    metadata:
+      labels:
+        control-plane: canary-operator
+    spec:
+      serviceAccountName: canary-operator-sa
+      containers:
+        - name: manager
+          image: ghcr.io/yourorg/canary-operator:latest
+          env:
+            - name: PROMETHEUS_URL
+              value: "http://prometheus-operated.monitoring.svc:9090"
+          ports:
+            - containerPort: 8080
+              name: metrics

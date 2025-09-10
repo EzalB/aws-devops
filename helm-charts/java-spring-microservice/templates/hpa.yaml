@@ -1,0 +1,50 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "todo.appName" . }}
+  labels:
+    app: {{ template "todo.appName" . }}
+    branch: {{ template "obm.branchName" . }}
+    {{- range $key, $value := .Values.customLabels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v2
+    kind: Deployment
+    name: {{ template "todo.appName" . }}
+  minReplicas: {{- if .Values.autoscaling.minReplicas }}
+  maxReplicas: {{- if .Values.autoscaling.maxReplicas }}
+  {{- if .Values.autoscaling.behaviour }}
+  behaviour:
+{{ toYaml .Values.autoscaling.behaviour | indent 4 }}
+  {{- end}}
+  metrics:
+  {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+  {{- end}}
+  {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+  {{- end}}
+  {{- if .Values.autoscaling.custom }}
+  {{- range $index, $metric := .Values.autoscaling.custom }}
+  - type: Pods
+    resource:
+      name: {{ $metric.name }}
+      target:
+        type: Utilization
+        averageUtilization: {{ $metric.targetValue }}
+  {{- end }}
+  {{- end }}
+{{- end}}

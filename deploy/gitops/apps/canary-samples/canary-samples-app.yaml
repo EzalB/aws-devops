@@ -1,0 +1,21 @@
+# deploy/gitops/apps/canary-samples-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: canary-samples
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/<your-org>/<your-repo>'
+    targetRevision: HEAD
+    path: deploy/gitops/apps/canary-samples
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

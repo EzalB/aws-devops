@@ -1,0 +1,222 @@
+name: Get info values
+
+on:
+  workflow_call:
+    secrets:
+      WORKLOAD_IDENTITY_PRVDR:
+        description: 'Workload identity pool name'
+        required: true
+      TODO_CICD_SA:
+        description: 'CI/CD service account name'
+        required: true
+      GCP_PROJECT_ID:
+        description: 'GCP Project Id'
+        required: true
+      GCP_REGION:
+        description: 'GCP Region'
+        required: true
+    outputs:
+      appName:
+        description: "Application name"
+        value: ${{ jobs.get-info-values.outputs.appName }}
+      appVersion:
+        description: "Application version"
+        value: ${{ jobs.get-info-values.outputs.appVersion }}
+      imageRepository:
+        description: "Image Repository name"
+        value: ${{ jobs.get-info-values.outputs.imageRepository }}
+      imageRepositoryWithVersion:
+        description: "Image Repository name with version"
+        value: ${{ jobs.get-info-values.outputs.imageRepositoryWithVersion }}
+      currentBranch:
+        description: "Current deployment branch"
+        value: ${{ jobs.get-info-values.outputs.currentBranch }}
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.generate_tag.outputs.new_tag_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: get-latest-tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          export tag_response=$(gh api -H 'Accept:application/vnd.github+json' /repos/$GITHUB_REPOSITORY/releases/latest)
+          echo "TAG_RESPONSE=$tag_response" >> $GITHUB_ENV
+          echo "TAG_RESPONSE=$tag_response" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+        env:
+          TAG_RESPONSE: ${{ steps.get-latest-tag.outputs.TAG_RESPONSE }}
+
+      - name: Fetching latest version
+        id: fetch-latest-version
+        run: |
+          echo tag response: $TAG_RESPONSE
+          latest_version=$(node .github/scripts/get-version.js)
+          echo "The version number is $latest_version"
+          echo "LATEST_VERSION=$latest_version" >> $GITHUB_ENV
+          echo "LATEST_VERSION=$latest_version" >> $GITHUB_OUTPUT
+
+      - name: Generate new tag/version
+        id: generate_tag
+        shell: bash
+        env:
+          RELEASE_TYPE: Patch
+          LATEST_TAG: ${{ steps.fetch-latest-version.outputs.LATEST_VERSION }}
+        run: |
+          if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            major="${BASH_REMATCH[1]}"
+            minor="${BASH_REMATCH[2]}"
+            patch="${BASH_REMATCH[3]}"
+          
+            echo "Major: ${major} ; Minor: ${minor} ; Patch: ${patch}"
+          
+            echo "The latest created tag is $LATEST_TAG"
+            echo "The release type is $RELEASE_TYPE"
+          
+            if [ "$RELEASE_TYPE" = "Major" ]; then
+                new_major=$((major + 1))
+                new_version="v${new_major}.0.0"
+          
+            elif [ "$RELEASE_TYPE" = "Minor" ]; then
+                new_minor=$((minor + 1))
+                new_version="v${major}.${new_minor}.0"
+          
+            elif [ "$RELEASE_TYPE" = "Patch" ]; then
+                new_patch=$((patch + 1))
+                new_version="v${major}.${minor}.${new_patch}"
+          
+            else
+              echo "Unsupported release type: $RELEASE_TYPE"
+              exit 1
+          
+            fi
+          
+            echo "Current version: $LATEST_TAG"
+            echo "New version: $new_version"
+            echo "Updating version: $LATEST_TAG => $new_version"
+            echo "new_tag_version=$new_version" >> $GITHUB_OUTPUT
+          
+          else
+            echo "Invalid version format: $LATEST_TAG"
+            exit 1
+          fi
+
+  get-info-values:
+    needs: [version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    outputs:
+      appName: ${{ steps.get-appName.outputs.appName }}
+      appVersion: ${{ steps.process-version.outputs.appVersion }}
+      imageRepository: ${{ steps.get-image-repository.outputs.imageRepository }}
+      imageRepositoryWithVersion: ${{ steps.get-image-repository-plus-version.outputs.imageRepositoryWithVersion }}
+      currentBranch: ${{ steps.get-current-branch.outputs.currentBranch }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current branch
+        id: get-current-branch
+        shell: bash
+        run: |-
+          branch=${{ github.head_ref || github.ref_name }}
+          echo "currentBranch=$branch" >> $GITHUB_OUTPUT
+          echo "currentBranch=$branch"
+
+      - name: Process version
+        id: process-version
+        run: |-
+          echo "appVersion=${{ needs.version.outputs.version }}" >> $GITHUB_OUTPUT
+          echo "appVersion=${{ needs.version.outputs.version }}"
+
+      - name: Install yq
+        run: |
+          sudo apt update
+          sudo apt install -y yq
+
+      - name: Fetch app-name from values.yaml
+        id: get-appName
+        run: |
+          app_name=$(yq '.appName' values.yaml)
+          echo "appName=$app_name"
+          echo "appName=$app_name" >> $GITHUB_OUTPUT
+
+      - name: Extract docker image repository
+        id: get-image-repository
+        env:
+          GCP_REGION: ${{ secrets.GCP_REGION }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGISTRY_TYPE: 'docker.pkg.dev'
+        run: |
+          branchName="${{ steps.get-current-branch.outputs.currentBranch }}"
+          appName="${{ steps.get-appName.outputs.appName }}"
+          
+          echo "::add-mask::${{ secrets.GCP_PROJECT_ID }}"
+          echo "::add-mask::${{ secrets.GCP_REGION }}"
+          echo "REGISTRY_TYPE=$REGISTRY_TYPE"
+          
+          imageRepository="${GCP_REGION}-${{ env.REGISTRY_TYPE }}/${GCP_PROJECT_ID}/"
+          
+          if [ "$branchName" = "main" ]; then
+            imageRepository+="release"
+          else
+            imageRepository+="snapshot"
+          fi
+          
+          imageRepository+="/$appName"
+          
+          echo "imageRepository=${imageRepository}" >> image-repo.txt
+
+      - name: Read Output and Save
+        id: get-docker-repo
+        run: |
+          imageRepository=$(cat image-repo.txt | grep imageRepository | cut -d '=' -f2)
+          
+          echo "imageRepository=$imageRepository" >> $GITHUB_OUTPUT
+          echo "imageRepository=$imageRepository"
+
+      - name: Extract image name with version
+        id: get-image-repository-plus-version
+        run: |-
+          echo "imageRepositoryWithVersion=${{ steps.get-docker-repo.outputs.imageRepository }}:${{ steps.process-version.outputs.appVersion }}" >> $GITHUB_OUTPUT
+          echo "imageRepositoryWithVersion=${{ steps.get-docker-repo.outputs.imageRepository }}:${{ steps.process-version.outputs.appVersion }}"
+
+      - name: Extract helm image repository
+        id: get-helm-repository
+        env:
+          GCP_REGION: ${{ secrets.GCP_REGION }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGISTRY_TYPE: 'docker.pkg.dev'
+          HELM_REPO_NAME: 'todo-helm-repo'
+        run: |
+          branchName="${{ steps.get-current-branch.outputs.currentBranch }}"
+          appName="${{ steps.get-appName.outputs.appName }}"
+          
+          echo "::add-mask::${{ secrets.GCP_PROJECT_ID }}"
+          echo "::add-mask::${{ secrets.GCP_REGION }}"
+          
+          helmRepository="oci://${GCP_REGION}-${{ env.REGISTRY_TYPE }}/${GCP_PROJECT_ID}/${{ env.HELM_REPO_NAME }}"
+          
+          # helmRepository+="/$appName"
+          
+          echo "helmRepository=$helmRepository" >> $GITHUB_OUTPUT
+          echo "helmRepository=$helmRepository"
+

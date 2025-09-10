@@ -1,0 +1,17 @@
+# deploy/gitops/apps/canary-samples/healthy-canary.yaml
+apiVersion: ops.ezalb.com/v1alpha1
+kind: CanaryRelease
+metadata:
+  name: todo-healthy
+  namespace: default
+spec:
+  targetRef:
+    kind: Deployment
+    name: todo-service
+    namespace: default
+  image: your-ecr-account.dkr.ecr.us-east-1.amazonaws.com/todo-service:canary-healthy
+  canaryPercent: 10
+  durationMinutes: 5
+  successCriteria:
+    errorRateThreshold: 0.02   # allow up to 2% error rate
+    latencyP95Ms: 500         # P95 latency less than 500ms

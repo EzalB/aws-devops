@@ -1,0 +1,80 @@
+appName: todo-sb-app
+branchName: main
+
+replicaCount: 1
+heapSizeMB: "!!str 512"
+javaOptionsEnv: "\"-Xms512m -Xmx512m\""
+
+service:
+  type: NodePort
+  port: 80
+
+port: 8080
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 0%
+
+image:
+  repository: unset
+  tag: unset
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pod
+          value: 1
+          periodSeconds: 60
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+
+readinessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /actuator/health
+    port: http
+  timeoutSeconds: 3
+  initialDelaySeconds: 60
+  periodSeconds: 5
+
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /actuator/health
+    port: http
+  timeoutSeconds: 3
+  initialDelaySeconds: 60
+  periodSeconds: 5
+
+workloadIdentity:
+  enabled: true
+  google_service_account: your-gsa@gcp-project.iam.gserviceaccount.com
+
+configMapValueAsEnv:
+  - configmapName: todo-app-config
+    envName: spring.datasource.url
+    keyToMap: spring.datasource.url
+
+configMapSecretAsEnv:
+  - envName: database_password
+    keyToMap: spring.datasource.password
+    secretFileName: spring.datasource.password

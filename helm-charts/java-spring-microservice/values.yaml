@@ -1,0 +1,71 @@
+appName: todo-service
+branchName: main
+
+replicaCount: 1
+heapSizeMB: "!!str 512"
+javaOptionsEnv: "\"-Xms512m -Xmx512m\""
+
+service:
+  type: ClusterIP
+  port: 80
+
+port: 8080
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 0%
+
+image:
+  repository: IMAGE_UNDEFINED
+  tag: TAG_UNDEFINED
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pod
+          value: 1
+          periodSeconds: 60
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+
+readinessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /manage/health
+    port: http
+  timeoutSeconds: 3
+  initialDelaySeconds: 60
+  periodSeconds: 5
+
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /manage/health
+    port: http
+  timeoutSeconds: 3
+  initialDelaySeconds: 60
+  periodSeconds: 5
+
+workloadIdentity:
+  enabled: false
+  workload_identity_gsa: your-gsa@your-project.iam.gserviceaccount.com
+

@@ -1,0 +1,21 @@
+# deploy/gitops/apps/canary-operator-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: canary-operator
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/<your-org>/<your-repo>'
+    targetRevision: HEAD
+    path: operator/config/manager
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true      # allow ArgoCD to prune removed resources when you change manifests
+      selfHeal: true   # auto-correct drift
+    syncOptions:
+      - CreateNamespace=true

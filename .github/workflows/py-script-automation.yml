@@ -1,0 +1,84 @@
+name: Python Automation Pipeline
+
+on:
+  workflow_dispatch:      # Manual trigger
+  schedule:               # Daily run for backup checks
+    - cron: "0 2 * * *"  # 2 AM UTC
+
+jobs:
+
+  setup-python:
+    name: Setup Python Environment
+    runs-on: ubuntu-latest
+    outputs:
+      python-path: ${{ steps.set-env.outputs.python-path }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 requests kubernetes
+
+      - id: set-env
+        run: echo "::set-output name=python-path::$(which python)"
+
+  run-loadgen:
+    name: Run Load Generator
+    needs: setup-python
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run loadgen.py
+        run: |
+          python scripts/loadgen.py \
+            --url "${{ secrets.TODO_SERVICE_URL }}" \
+            --token "${{ secrets.TODO_SERVICE_TOKEN }}" \
+            --workers 20 \
+            --duration 60
+
+  backup-check:
+    name: Run Backup Health Check
+    needs: setup-python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Run backup_check.py
+        run: |
+          python scripts/backup_check.py \
+            --bucket "${{ secrets.BACKUP_S3_BUCKET }}" \
+            --prefix "backups/" \
+            --namespace "default" \
+            --region "us-east-1"
+
+  deploy-helper:
+    name: Deploy Helper Job
+    needs: setup-python
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" > $HOME/.kube/config
+      - name: Run deploy_helper.py to create test namespace
+        run: |
+          python scripts/deploy_helper.py create --name "ci-test-${{ github.run_id }}"
+      - name: Run deploy_helper.py to list namespaces
+        run: python scripts/deploy_helper.py list
+      - name: Cleanup test namespace
+        run: python scripts/deploy_helper.py delete --name "ci-test-${{ github.run_id }}"
