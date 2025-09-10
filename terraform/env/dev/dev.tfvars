@@ -4,7 +4,7 @@ aws_region  = "us-east-1"
 default_tags = {
   Project = "aws-devops"
   Owner   = "EzalB"
-  environment = "dev"
+  Environment = "dev"
 }
 
 # VPC

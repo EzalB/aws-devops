@@ -10,14 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/yourorg/notifier-service/internal/config"
-	"github.com/yourorg/notifier-service/internal/httpserver"
-	"github.com/yourorg/notifier-service/internal/logging"
-	"github.com/yourorg/notifier-service/internal/metrics"
-	"github.com/yourorg/notifier-service/internal/notify"
-	"github.com/yourorg/notifier-service/internal/sqsconsumer"
-	"github.com/yourorg/notifier-service/internal/tracing"
-	"github.com/yourorg/notifier-service/internal/version"
+	"github.com/EzalB/notifier-service/internal/config"
+	"github.com/EzalB/notifier-service/internal/httpserver"
+	"github.com/EzalB/notifier-service/internal/logging"
+	"github.com/EzalB/notifier-service/internal/metrics"
+	"github.com/EzalB/notifier-service/internal/notify"
+	"github.com/EzalB/notifier-service/internal/sqsconsumer"
+	"github.com/EzalB/notifier-service/internal/tracing"
+	"github.com/EzalB/notifier-service/internal/version"
 )
 
 func main() {
