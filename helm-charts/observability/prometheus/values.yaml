@@ -1,0 +1,56 @@
+global:
+  rbac:
+    create: true
+  serviceAccount:
+    create: true
+
+alertmanager:
+  enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: slack-notifications
+    receivers:
+      - name: slack-notifications
+        slack_configs:
+          - api_url: https://hooks.slack.com/services/XXXX/XXXX/XXXX
+            channel: "#alerts"
+            send_resolved: true
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector:
+      matchLabels:
+        app: "observability"
+    retention: 15d
+    externalLabels:
+      cluster: "dev-cluster"
+    ruleSelector:
+      matchLabels:
+        role: alert-rules
+
+grafana:
+  enabled: true
+  adminUser: admin
+  adminPassword: admin123
+  service:
+    type: ClusterIP
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-operated:9090
+          access: proxy
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://loki:3100
+          access: proxy
+        - name: Tempo
+          type: tempo
+          url: http://tempo:3200
+          access: proxy

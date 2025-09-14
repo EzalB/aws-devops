@@ -27,12 +27,14 @@ spring:
 logging:
   level:
     root: INFO
+#  pattern:
+#    console: '{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%p","thread":"%t","logger":"%c","message":"%m"}\n'
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,env
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: always
@@ -40,3 +42,6 @@ management:
     export:
       prometheus:
         enabled: true
+
+otel:
+  endpoint: "http://otel-collector:4317"

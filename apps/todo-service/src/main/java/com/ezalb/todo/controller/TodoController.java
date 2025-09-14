@@ -1,8 +1,8 @@
-package com.example.todos.controller;
+package com.ezalb.todo.controller;
 
-import com.example.todos.dto.CreateTodoRequest;
-import com.example.todos.dto.TodoDto;
-import com.example.todos.service.TodoService;
+import com.ezalb.todo.dto.CreateTodoRequest;
+import com.ezalb.todo.dto.TodoDto;
+import com.ezalb.todo.service.TodoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;

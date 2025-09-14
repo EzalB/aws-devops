@@ -1,4 +1,4 @@
-package com.example.todos.dto;
+package com.ezalb.todo.dto;
 
 import lombok.*;
 import java.time.Instant;

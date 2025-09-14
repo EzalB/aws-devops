@@ -1,0 +1,56 @@
+name: Deploy Go Notifier Service
+
+on:
+  push:
+    paths:
+      - "apps/notifier-service/**"
+      - ".github/workflows/go-microservice.yml"
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+          aws-region: us-east-1
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Build & Test
+        run: |
+          cd apps/notifier-service
+          go mod tidy
+          go vet ./...
+          go test ./...
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Docker Image
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/notifier-service:$(date +%s)
+          docker build -t $IMAGE_URI apps/notifier-service
+          docker push $IMAGE_URI
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Update Helm values
+        run: |
+          sed -i "s|image:.*|image: $IMAGE_URI|" helm-charts/notifier-service/values.yaml
+
+      - name: Deploy via Helm
+        run: |
+          helm upgrade --install notifier-service helm-charts/notifier-service \
+            --namespace notifier --create-namespace

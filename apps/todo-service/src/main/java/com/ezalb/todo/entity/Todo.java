@@ -1,4 +1,4 @@
-package com.example.todos.entity;
+package com.ezalb.todo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

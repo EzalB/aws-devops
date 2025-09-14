@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+// 	"log"
 	"net/http"
 	"os"
 	"os/signal"

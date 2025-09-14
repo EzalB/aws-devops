@@ -10,12 +10,11 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"github.com/yourorg/notifier-service/internal/config"
-	"github.com/yourorg/notifier-service/internal/logging"
-	"github.com/yourorg/notifier-service/internal/notify"
+	"github.com/EzalB/notifier-service/internal/config"
+	"github.com/EzalB/notifier-service/internal/logging"
+	"github.com/EzalB/notifier-service/internal/notify"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 

@@ -1,6 +1,6 @@
-package com.example.todos.repository;
+package com.ezalb.todo.repository;
 
-import com.example.todos.entity.Todo;
+import com.ezalb.todo.entity.Todo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

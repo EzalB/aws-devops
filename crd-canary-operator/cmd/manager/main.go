@@ -14,7 +14,7 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/log/zap"
 
     canaryv1 "github.com/EzalB/aws-devops/operator/api/v1alpha1"
-    "github.com/yourorg/EzalB/aws-devops/operator/controllers"
+    "github.com/EzalB/EzalB/aws-devops/operator/controllers"
 )
 
 var (

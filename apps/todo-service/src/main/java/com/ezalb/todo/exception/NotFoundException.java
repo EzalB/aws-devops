@@ -1,4 +1,4 @@
-package com.example.todos.exception;
+package com.ezalb.todo.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;

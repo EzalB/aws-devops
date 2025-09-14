@@ -1,4 +1,4 @@
-package com.example.todo.sqs;
+package com.ezalb.todo.sqs;
 
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;

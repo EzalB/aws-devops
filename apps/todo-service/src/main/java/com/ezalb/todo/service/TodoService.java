@@ -1,10 +1,11 @@
-package com.example.todos.service;
+package com.ezalb.todo.service;
 
-import com.example.todos.dto.CreateTodoRequest;
-import com.example.todos.dto.TodoDto;
-import com.example.todos.entity.Todo;
-import com.example.todos.exception.NotFoundException;
-import com.example.todos.repository.TodoRepository;
+import com.ezalb.todo.dto.CreateTodoRequest;
+import com.ezalb.todo.dto.TodoDto;
+import com.ezalb.todo.entity.Todo;
+import com.ezalb.todo.exception.NotFoundException;
+import com.ezalb.todo.repository.TodoRepository;
+import com.ezalb.todo.sqs.SqsPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -15,12 +16,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TodoService {
     private final TodoRepository repo;
-
     private final SqsPublisher sqsPublisher;
-
-    public TodoService(SqsPublisher sqsPublisher) {
-        this.sqsPublisher = sqsPublisher;
-    }
 
     public TodoDto create(CreateTodoRequest req) {
         Todo t = Todo.builder()
@@ -46,22 +42,28 @@ public class TodoService {
         t.setTitle(req.getTitle());
         t.setDescription(req.getDescription());
         Todo saved = repo.save(t);
+
+        sqsPublisher.publishNotification("system", "Todo updated: " + saved.getId());
+
         return toDto(saved);
     }
 
     public void delete(UUID id) {
         if (!repo.existsById(id)) throw new NotFoundException("Todo not found: " + id);
         repo.deleteById(id);
+
+        sqsPublisher.publishNotification("system", "Todo deleted: " + id);
     }
 
     public TodoDto markCompleted(UUID id, boolean completed) {
         Todo t = repo.findById(id).orElseThrow(() -> new NotFoundException("Todo not found: " + id));
         t.setCompleted(completed);
+        Todo saved = repo.save(t);
 
-        String message = "Todo " + todoId + " completed!";
-        sqsPublisher.publishNotification(userId, message);
+        String message = "Todo " + saved.getId() + " marked " + (completed ? "completed" : "incomplete");
+        sqsPublisher.publishNotification("system", message);
 
-        return toDto(repo.save(t));
+        return toDto(saved);
     }
 
     private TodoDto toDto(Todo t) {

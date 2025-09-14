@@ -53,6 +53,7 @@ dependencies {
 	// Observability metrics
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'io.opentelemetry:opentelemetry-api:1.29.0'
+	implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
 	// AWS SQS service
 	implementation 'software.amazon.awssdk:sqs:2.20.100'

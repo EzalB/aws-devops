@@ -1,17 +1,16 @@
 package httpserver
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/yourorg/notifier-service/internal/config"
-	"github.com/yourorg/notifier-service/internal/logging"
-	"github.com/yourorg/notifier-service/internal/metrics"
-	"github.com/yourorg/notifier-service/internal/notify"
+	"github.com/EzalB/notifier-service/internal/config"
+	"github.com/EzalB/notifier-service/internal/logging"
+	"github.com/EzalB/notifier-service/internal/metrics"
+	"github.com/EzalB/notifier-service/internal/notify"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 

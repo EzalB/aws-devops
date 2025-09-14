@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/yourorg/notifier-service/internal/logging"
-	"github.com/yourorg/notifier-service/internal/metrics"
+	"github.com/EzalB/notifier-service/internal/logging"
+	"github.com/EzalB/notifier-service/internal/metrics"
 )
 
 type Sender struct {
