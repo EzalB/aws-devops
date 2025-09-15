@@ -1,8 +1,13 @@
 package com.ezalb.todo.sqs;
 
+import com.ezalb.todo.config.SqsProperties;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+
+import java.net.URI;
 
 @Component
 public class SqsPublisher {
@@ -10,9 +15,18 @@ public class SqsPublisher {
     private final SqsClient sqsClient;
     private final String queueUrl;
 
-    public SqsPublisher() {
-        this.sqsClient = SqsClient.create();
-        this.queueUrl = System.getenv("SQS_QUEUE_URL");
+    public SqsPublisher(SqsProperties properties) {
+        final String endpoint = properties.getEndpoint();
+
+        SqsClientBuilder builder = SqsClient.builder()
+                .region(Region.of(properties.getRegion()));
+
+        if (endpoint != null && !endpoint.isBlank()) {
+            builder.endpointOverride(URI.create(endpoint));
+        }
+
+        this.sqsClient = builder.build();
+        this.queueUrl = properties.getQueueUrl();
     }
 
     public void publishNotification(String userId, String message) {

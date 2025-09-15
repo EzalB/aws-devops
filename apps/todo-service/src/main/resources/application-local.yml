@@ -8,11 +8,11 @@ spring:
     name: todo-service
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/todo_app
+    url: jdbc:postgresql://localhost:5432/todo_service
 #    url: jdbc:h2:mem:todos;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
 #    driver-class-name: org.h2.Driver
     username: todo_user
-    password: ${db_password}
+    password: admin
     hikari:
       maximum-pool-size: 10
   jpa:
@@ -45,3 +45,9 @@ management:
 
 otel:
   endpoint: "http://otel-collector:4317"
+
+aws:
+  sqs:
+    queue-url: http://localhost:4566/000000000000/my-queue
+    region: us-east-1
+    endpoint: http://localhost:4566
