@@ -30,7 +30,10 @@ public class SqsPublisher {
     }
 
     public void publishNotification(String userId, String message) {
-        String payload = String.format("{\"userId\": \"%s\", \"message\": \"%s\"}", userId, message);
+        String payload = String.format(
+                "{\"to\": \"%s\", \"subject\": \"Todo Events\", \"body\": \"%s\"}",
+                userId, message
+        );
 
         SendMessageRequest sendMsgRequest = SendMessageRequest.builder()
                 .queueUrl(queueUrl)

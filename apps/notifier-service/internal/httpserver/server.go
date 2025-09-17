@@ -7,10 +7,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/EzalB/notifier-service/internal/config"
-	"github.com/EzalB/notifier-service/internal/logging"
-	"github.com/EzalB/notifier-service/internal/metrics"
-	"github.com/EzalB/notifier-service/internal/notify"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/config"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/logging"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/metrics"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/notify"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -46,7 +46,7 @@ func NewRouter(cfg config.Config, log *logging.Logger, reg *prometheus.Registry,
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
+// 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte("queued"))
 	}), "notify"))
 

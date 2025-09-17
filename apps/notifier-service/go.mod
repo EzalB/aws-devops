@@ -1,4 +1,4 @@
-module github.com/EzalB/notifier-service
+module github.com/EzalB/aws-devops/apps/notifier-service
 
 go 1.22
 

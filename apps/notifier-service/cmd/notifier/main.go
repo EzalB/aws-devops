@@ -10,14 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/EzalB/notifier-service/internal/config"
-	"github.com/EzalB/notifier-service/internal/httpserver"
-	"github.com/EzalB/notifier-service/internal/logging"
-	"github.com/EzalB/notifier-service/internal/metrics"
-	"github.com/EzalB/notifier-service/internal/notify"
-	"github.com/EzalB/notifier-service/internal/sqsconsumer"
-	"github.com/EzalB/notifier-service/internal/tracing"
-	"github.com/EzalB/notifier-service/internal/version"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/config"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/httpserver"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/logging"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/metrics"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/notify"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/sqsconsumer"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/tracing"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/version"
 )
 
 func main() {

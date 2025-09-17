@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EzalB/notifier-service/internal/logging"
-	"github.com/EzalB/notifier-service/internal/metrics"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/logging"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/metrics"
 )
 
 type Sender struct {
@@ -18,7 +18,6 @@ type Message struct {
 	To      string `json:"to"`
 	Subject string `json:"subject"`
 	Body    string `json:"body"`
-	// Additional fields can be added
 }
 
 func New(l *logging.Logger, reg interface{}) *Sender { // reg kept for symmetry

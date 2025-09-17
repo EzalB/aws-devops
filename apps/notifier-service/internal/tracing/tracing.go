@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/EzalB/notifier-service/internal/config"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"

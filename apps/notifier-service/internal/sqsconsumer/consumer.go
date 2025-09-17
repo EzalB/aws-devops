@@ -8,11 +8,12 @@ import (
 	"time"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"github.com/EzalB/notifier-service/internal/config"
-	"github.com/EzalB/notifier-service/internal/logging"
-	"github.com/EzalB/notifier-service/internal/notify"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/config"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/logging"
+	"github.com/EzalB/aws-devops/apps/notifier-service/internal/notify"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -30,7 +31,24 @@ func MaybeStart(cfg config.Config, log *logging.Logger, tp trace.TracerProvider,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	// AWS config picks up env/IRSA automatically
-	awscfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(cfg.AWSRegion))
+	awscfg, err := awsconfig.LoadDefaultConfig(
+        ctx,
+        awsconfig.WithRegion(cfg.AWSRegion),
+        awsconfig.WithEndpointResolverWithOptions(
+            aws.EndpointResolverWithOptionsFunc(
+                func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+                    if strings.Contains(cfg.SQSQueueURL, "localhost") {
+                        return aws.Endpoint{
+                            URL:           "http://localhost:4566",
+                            SigningRegion: cfg.AWSRegion,
+                        }, nil
+                    }
+                    return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+                }),
+        ),
+    )
+
+// 	awscfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(cfg.AWSRegion))
 	if err != nil {
 		cancel()
 		return nil, nil, err

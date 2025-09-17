@@ -29,10 +29,10 @@ func Load() Config {
 		Env:            getenv("ENV", "dev"),
 		LogLevel:       getenv("LOG_LEVEL", "info"),
 		MetricsPath:    getenv("PROMETHEUS_METRICS_PATH", "/metrics"),
-		OTLPEndpoint:   getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector.observability:4318"),
+		OTLPEndpoint:   getenv("OTEL_EXPORTER_OTLP_ENDPOINT", ""),
 		ServiceName:    getenv("OTEL_SERVICE_NAME", "notifier-service"),
 		ServiceVersion: getenv("OTEL_SERVICE_VERSION", "0.1.0"),
-		SQSQueueURL:    getenv("SQS_QUEUE_URL", ""),
+		SQSQueueURL:    getenv("SQS_QUEUE_URL", "http://localhost:4566/000000000000/todo-events"),
 		AWSRegion:      getenv("AWS_REGION", "us-east-1"),
 	}
 }
