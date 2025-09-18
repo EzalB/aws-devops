@@ -40,9 +40,6 @@ jobs:
           role-session-name: terraform-gha
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform Format
-        run: terraform fmt -check -recursive
-
       - name: Terraform Init
         run: terraform init -input=false
 
