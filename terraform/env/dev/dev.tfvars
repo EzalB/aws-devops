@@ -7,7 +7,7 @@ default_tags = {
   Environment = "dev"
 }
 
-# VPC
+## VPC
 #vpc_cidr_block           = "10.0.0.0/16"
 #vpc_azs                  = ["us-east-1a", "us-east-1b"]
 #vpc_public_subnet_cidrs  = ["10.0.0.0/24", "10.0.1.0/24"]
@@ -21,11 +21,11 @@ ecr_repos = [
 
 # S3
 s3_buckets = [
-  { name = "dev-artifacts", versioning = true,  acl = "private" },
-  { name = "dev-logs",      versioning = false, acl = "private" }
+  { name = "dev-artifacts", versioning = true },
+  { name = "dev-logs",      versioning = false }
 ]
 
-# EKS
+## EKS
 #eks_cluster_version = "1.28"
 #eks_oidc_enabled    = true
 #

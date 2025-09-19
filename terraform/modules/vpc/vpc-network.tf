@@ -16,7 +16,7 @@ resource "aws_subnet" "public" {
 
   vpc_id                  = aws_vpc.vpc_network.id
   cidr_block              = each.value
-  availability_zone       = length(var.azs) > 0 ? var.azs[each.key] : null
+  availability_zone = length(var.azs) > 0 ? element(var.azs, each.key) : null
   map_public_ip_on_launch = true
   tags = merge(var.tags, { Name = "${var.name}-public-${each.key}" })
 }
@@ -27,7 +27,7 @@ resource "aws_subnet" "private" {
 
   vpc_id            = aws_vpc.vpc_network.id
   cidr_block        = each.value
-  availability_zone = length(var.azs) > 0 ? var.azs[each.key] : null
+  availability_zone = length(var.azs) > 0 ? element(var.azs, each.key) : null
   tags = merge(var.tags, { Name = "${var.name}-private-${each.key}" })
 }
 
@@ -52,7 +52,6 @@ resource "aws_route_table_association" "pub_assoc" {
 # NAT Gateway(s) and Elastic IP(s) optional
 resource "aws_eip" "nat" {
   count = var.enable_nat_gateway ? length(aws_subnet.public) : 0
-  vpc   = true
   tags  = merge(var.tags, { Name = "${var.name}-nat-eip-${count.index}" })
 }
 
@@ -71,12 +70,10 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route" "private_nat" {
-  for_each                = aws_route_table.private
-  route_table_id          = each.value.id
-  destination_cidr_block  = "0.0.0.0/0"
-  gateway_id              = var.enable_nat_gateway ? aws_nat_gateway.nat[0].id : null
-  depends_on              = [aws_nat_gateway.nat]
-  # Note: In multi-AZ you may want to map NATs per AZ; this module uses simplified approach
+  for_each               = aws_subnet.private
+  route_table_id         = aws_route_table.private[each.key].id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = var.enable_nat_gateway ? aws_nat_gateway.nat[each.key].id : null
 }
 
 resource "aws_route_table_association" "priv_assoc" {
