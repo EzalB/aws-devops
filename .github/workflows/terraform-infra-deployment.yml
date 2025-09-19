@@ -1,4 +1,4 @@
-name: Terraform AWS Infrastructure
+name: Terraform AWS Infrastructure (Using Modules)
 
 on:
   pull_request:
