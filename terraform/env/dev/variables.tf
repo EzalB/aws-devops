@@ -10,6 +10,12 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "owner" {
+  description = "Project Owner"
+  type        = string
+  default     = "ezalb"
+}
+
 variable "default_tags" {
   description = "Default tags to apply to all resources"
   type        = map(string)
