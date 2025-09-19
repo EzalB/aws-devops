@@ -25,7 +25,7 @@ s3_buckets = [
   { name = "notifier-service-logs", versioning = false }
 ]
 
-## EKS
+# EKS
 #eks_cluster_version = "1.28"
 #eks_oidc_enabled    = true
 #
