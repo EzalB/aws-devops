@@ -28,6 +28,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Acknowledge applying changes
+        uses: actions/github-script@v6
+        if: ${{ github.event.pull_request.merged == true }}
+        with:
+          script: |
+            const output = `Applying pull request. Hold on to your seats... 🔥`;
+
+            github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+            });
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -35,10 +49,26 @@ jobs:
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
+        id: auth
         with:
           role-to-assume: ${{ secrets.AWS_TFE_ROLE_ARN }}
           role-session-name: terraform-gha
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: AWS auth failure comment
+        uses: actions/github-script@v6
+        if: ${{ failure() && steps.auth.conclusion == 'failure' }}
+        with:
+          script: |
+            const output = `## Failed to authenticate with AWS!\n\n
+            Ensure the OIDC provider is set up correctly, and that your AWS Role has the required permissions.
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
 
       - name: Terraform Init
         run: terraform init -input=false
@@ -111,7 +141,7 @@ jobs:
 
       - name: Read Terraform Apply Output
         id: tf_apply_output
-        if: ${{ steps.check-pr-merge.outputs.merged == 'true' }}
+        if: github.event.pull_request.merged == true
         run: |
           echo 'status_out<<EOF' >> $GITHUB_OUTPUT
           cat tfapply.log >> $GITHUB_OUTPUT
@@ -119,7 +149,7 @@ jobs:
 
       - name: Send Terraform apply output to PR comment
         uses: actions/github-script@v6
-        if: ${{ steps.check-pr-merge.outputs.merged == 'true' }}
+        if: github.event.pull_request.merged == true
         env:
           APPLY_OUTPUT: ${{ github.event.pull_request.merged == true }}
         with:
@@ -143,7 +173,7 @@ jobs:
 
       - name: Send Terraform apply output to PR comment (failure)
         uses: actions/github-script@v6
-        if: ${{ steps.check-pr-merge.outputs.merged == 'true' && steps.tf_apply.outcome == 'failure' }}
+        if: ${{ github.event.pull_request.merged == true && steps.tf_apply.outcome == 'failure' }}
         env:
           APPLY_OUTPUT: ${{ steps.tf_apply_output.outputs.status_out }}
         with:
