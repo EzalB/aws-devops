@@ -1,4 +1,4 @@
-name: Terraform AWS Infrastructure
+name: Terraform AWS Infrastructure (Using Modules)
 
 on:
   pull_request:
@@ -36,12 +36,9 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::123456789012:role/github-terraform-role
-          role-session-name: terraform-github
+          role-to-assume: ${{ secrets.AWS_TFE_ROLE_ARN }}
+          role-session-name: terraform-gha
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Terraform Format
-        run: terraform fmt -check -recursive
 
       - name: Terraform Init
         run: terraform init -input=false
@@ -55,7 +52,6 @@ jobs:
 
       - name: Read Terraform Plan Output
         id: tf_plan_output
-        working-directory: ${{ steps.set-dir.outputs.infra_dir }}
         run: |
           echo 'status_out<<EOF' >> $GITHUB_OUTPUT
           cat tfplan.log >> $GITHUB_OUTPUT
@@ -116,7 +112,6 @@ jobs:
       - name: Read Terraform Apply Output
         id: tf_apply_output
         if: ${{ steps.check-pr-merge.outputs.merged == 'true' }}
-        working-directory: ${{ steps.set-dir.outputs.infra_dir }}
         run: |
           echo 'status_out<<EOF' >> $GITHUB_OUTPUT
           cat tfapply.log >> $GITHUB_OUTPUT

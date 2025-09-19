@@ -1,37 +1,20 @@
-variable "bucket_prefix" {
+variable "name_prefix" {
+  description = "Prefix applied to bucket names"
   type        = string
-  default     = ""
-  description = "Prefix of the S3 bucket"
 }
 
-variable "force_destroy" {
-  description = "Whether to force destroy the bucket even if it contains objects"
-  type        = bool
-  default     = false
-}
-
-variable "versioning_enabled" {
-  description = "Enable S3 bucket versioning"
-  type        = bool
-  default     = false
-}
-
-variable "enable_lifecycle_rule" {
-  description = "Enable lifecycle rule for the bucket"
-  type        = bool
-  default     = false
-}
-
-variable "lifecycle_rule_days" {
-  description = "Number of days after which objects are deleted (if lifecycle enabled)"
-  type        = number
-  default     = 30
-}
-
-variable "expiration_days" {
-  description = "Number of days after which objects are deleted (if lifecycle enabled)"
-  type        = number
-  default     = 30
+variable "buckets" {
+  description = "List of S3 buckets to create with attributes"
+  type = list(object({
+    name                      = string
+    versioning                = bool
+    location                  = optional(string, "us-east-1")
+    force_destroy             = optional(bool, false)
+    enable_lifecycle_rule     = optional(bool, false)
+    lifecycle_rule_days       = optional(number, 30)
+    expiration_days           = optional(number, 365)
+    transition_storage_class  = optional(string, "STANDARD_IA")
+  }))
 }
 
 variable "block_public_acls" {
@@ -58,16 +41,4 @@ variable "tags" {
   description = "Tags to apply to the bucket"
   type        = map(string)
   default     = {}
-}
-
-variable "location" {
-  type = string
-  default = "eu-north1"
-  description = "Location for S3"
-}
-
-variable "transition_storage_class" {
-  type = string
-  default = "STANDARD_IA"
-  description = "Storage class for the new bucket."
 }

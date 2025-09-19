@@ -46,25 +46,27 @@ data "aws_eks_cluster" "eks" {
   name = aws_eks_cluster.eks_cluster.name
 }
 
+data "tls_certificate" "eks" {
+  url = data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
+}
+
 # Optionally create OIDC provider for IRSA
 resource "aws_iam_openid_connect_provider" "oidc" {
   count = var.eks_oidc_enabled ? 1 : 0
 
-  url = replace(data.aws_eks_cluster.eks.identity[0].oidc[0].issuer, "https://", "")
-  client_id_list = ["sts.amazonaws.com"]
+  url             = replace(data.aws_eks_cluster.eks.identity[0].oidc[0].issuer, "https://", "")
+  client_id_list  = ["sts.amazonaws.com"]
 
-  thumbprint_list = [
-    # It's generally better to fetch thumbprint dynamically or provide as var. Using amazon's public CA thumbprint
-    "9e99a48a9960b14926bb7f3b02e22da0afd33a8f"
-  ]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
 }
 
 # Node group IAM role
 resource "aws_iam_role" "node_group_role" {
-  count = length(var.node_groups) > 0 ? 1 : 0
-  name  = "${var.cluster_name}-ng-role"
+  for_each = { for ng in var.node_groups : ng.name => ng }
+
+  name               = "${var.cluster_name}-${each.key}-ng-role"
   assume_role_policy = data.aws_iam_policy_document.node_assume_role.json
-  tags = var.tags
+  tags               = var.tags
 }
 
 data "aws_iam_policy_document" "node_assume_role" {
@@ -113,7 +115,7 @@ resource "aws_eks_node_group" "managed" {
 
   instance_types = each.value.instance_types
   disk_size      = each.value.disk_size
-
+  labels = each.value.labels
   tags = merge(var.tags, each.value.tags, { Name = "${var.cluster_name}-${each.key}" })
 }
 
@@ -121,13 +123,16 @@ resource "aws_eks_node_group" "managed" {
 resource "aws_eks_fargate_profile" "fargate" {
   for_each = { for fp in var.fargate_profiles : fp.name => fp }
 
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  fargate_profile_name = each.key
+  cluster_name           = aws_eks_cluster.eks_cluster.name
+  fargate_profile_name   = each.key
   pod_execution_role_arn = each.value.pod_execution_role_arn
-  subnet_ids = var.private_subnet_ids
+  subnet_ids             = var.private_subnet_ids
 
-  selector {
-    for_each = toset([for s in each.value.selectors : s.namespace])
-    namespace = each.value.selectors[0].namespace
+  dynamic "selector" {
+    for_each = each.value.selectors
+    content {
+      namespace = selector.value.namespace
+    }
   }
 }
+

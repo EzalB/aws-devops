@@ -38,3 +38,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "region" {
+  type    = string
+  default = "us-east-1"
+}
