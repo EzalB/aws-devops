@@ -1,5 +1,5 @@
 locals {
-  name_prefix = "${var.environment}-demo"
+  name_prefix = "${var.environment}"
 }
 
 #module "vpc" {

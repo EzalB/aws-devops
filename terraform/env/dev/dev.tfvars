@@ -21,8 +21,8 @@ ecr_repos = [
 
 # S3
 s3_buckets = [
-  { name = "dev-artifacts", versioning = true },
-  { name = "dev-logs",      versioning = false }
+  { name = "todo-service-logs",     versioning = true },
+  { name = "notifier-service-logs", versioning = false }
 ]
 
 ## EKS
