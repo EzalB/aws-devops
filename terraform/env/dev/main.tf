@@ -1,5 +1,5 @@
 locals {
-  name_prefix = "${var.environment}"
+  name_prefix = "${var.owner}"
 }
 
 #module "vpc" {
