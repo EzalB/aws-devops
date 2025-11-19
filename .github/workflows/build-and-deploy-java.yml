@@ -1,4 +1,4 @@
-name: Build and Deploy - Java
+name: Deploy Java Todo Service
 
 on:
   push:

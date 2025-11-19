@@ -2,8 +2,8 @@ name: Python Automation Pipeline
 
 on:
   workflow_dispatch:      # Manual trigger
-  schedule:               # Daily run for backup checks
-    - cron: "0 2 * * *"  # 2 AM UTC
+  # schedule:               # Daily run for backup checks
+  #   - cron: "0 2 * * *"  # 2 AM UTC
 
 jobs:
 
