@@ -1,4 +1,4 @@
-name: Python Automation Pipeline
+name: Automated Load Generator using Python
 
 on:
   workflow_dispatch:      # Manual trigger
